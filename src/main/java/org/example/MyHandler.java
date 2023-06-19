@@ -50,13 +50,16 @@ public class MyHandler implements HttpHandler {
         os.write(response.getBytes());
         os.close();
     }
+
     public String checker(String data){
 
         Gson gson = new Gson();
         Command cmd;
-        try {
+
+        try { //è stato messo il try/catch perchè se l'utente inserisce un tocken Troppo lungo il Gson da errore...
             cmd = gson.fromJson(data, Command.class);
-        }catch (Exception e){
+        }catch (Exception e)
+        {
             if(data.contains("html")){
                 return new ListAnswer().htmlMaker("TOKEN ERRATO");
             }
@@ -66,42 +69,13 @@ public class MyHandler implements HttpHandler {
         }
 
         if(cmd.cmd.equals("list")) {
-            if (cmd.mode != null && cmd.mode.equals("json")) {
-                if(users.tokenVerify(cmd.token))
-                    return new ListAnswer().listPrint(new Store().getProdotti());
-                else
-                    return new Answer(false, "token errato").asJSON();
-            } else if (cmd.mode != null && cmd.mode.equals("html")) {
-                if(users.tokenVerify(cmd.token))
-                    return new Answer().htmlMaker(new ListAnswer().listPrint(new Store().getProdotti()));
-                else
-                    return new ListAnswer().htmlMaker("TOKEN ERRATO");
-            } else {
-                return new Answer(false, "scegliere la MODE corretta").asJSON();
-            }
+            return commandList(cmd);
         }
-        else if (cmd.cmd.equals("login")){
 
-            if(cmd.mode != null && cmd.mode.equals("json")) {
-                String result = users.verify(cmd.param1, cmd.param2);
-                if (result.length() > 0)
-                    return new Answer(true, "Login effettuato token " + result).asJSON();
-                else {
-                    return new Answer(false, "Login fallito  utente non trovato").asJSON();
-                }
-            }
-            else if(cmd.mode != null && cmd.mode.equals("html")){
-                String result = users.verify(cmd.param1, cmd.param2);
-                if (result.length() > 0)
-                    return new Answer().htmlMaker("Login effettuato token " + result);
-                else {
-                    return new Answer().htmlMaker("Login fallito - utente non trovato");
-                }
-            }
-            else {
-                return new Answer(false, "scegliere la MODE corretta").asJSON();
-            }
+        else if (cmd.cmd.equals("login")){
+            return commandLogin(cmd);
         }
+
         if(cmd.mode != null &&cmd.mode.equals("html")){
             return new Answer().htmlMaker("Comando sconosciuto");
         }
@@ -110,10 +84,54 @@ public class MyHandler implements HttpHandler {
         }
     }
 
-    public void answerJson(){
+    String commandList(Command cmd){
+        if (cmd.mode != null && cmd.mode.equals("json")) {
+            if(users.tokenVerify(cmd.token))
+                return new ListAnswer().listPrint(new Store().getProdotti());
+            else
+                return new Answer(false, "token errato").asJSON();
+        } else if (cmd.mode != null && cmd.mode.equals("html")) {
+            if(users.tokenVerify(cmd.token))
+                return new Answer().htmlMaker(new ListAnswer().listPrint(new Store().getProdotti()));
+            else
+                return new ListAnswer().htmlMaker("TOKEN ERRATO");
+        } else {
+            return new Answer(false, "scegliere la MODE corretta").asJSON();
+        }
+    }
+
+
+    String commandLogin(Command cmd){
+
+        String result = users.verify(cmd.param1, cmd.param2);
+
+        if(cmd.mode != null && cmd.mode.equals("json"))
+        {
+            if (result.length() > 0) {
+                return new Answer(true, "Login effettuato token " + result).asJSON();
+            }
+            else {
+                return new Answer(false, "Login fallito  utente non trovato").asJSON();
+            }
+        }
+
+        else if(cmd.mode != null && cmd.mode.equals("html")){
+            if (result.length() > 0)
+            {
+                return new Answer().htmlMaker("Login effettuato token " + result);
+            }
+            else
+            {
+                return new Answer().htmlMaker("Login fallito  utente non trovato");
+            }
+
+        }
+
+        else
+        {
+            return new Answer(false, "scegliere la MODE corretta").asJSON();
+        }
 
     }
-    public void answerHtml(){
 
-    }
 }
